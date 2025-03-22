@@ -7,7 +7,6 @@ bon_mdp = "b44adba65a265d07673d839bd45a432c23f44f140ed190b4c2daff0fe98a5845"
 
 tentatives = 3
 
-# Les humains sont des patates.
 mdp = getpass.getpass("Entrez le mot de passe : ")
 
 while tentatives > 0:
@@ -16,7 +15,7 @@ while tentatives > 0:
     mdp_hash = objet_hash.hexdigest()
 
     if mdp_hash == bon_mdp:
-        with open("/home/nsauvage/Documents/Python/Lestroisgogols/Logo.txt", "r") as logo:
+        with open("Logo.txt", "r") as logo:
             logo_content = logo.read()
 
         print(logo_content)
