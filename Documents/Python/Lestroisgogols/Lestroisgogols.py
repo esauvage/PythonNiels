@@ -67,7 +67,7 @@ if indentifiant == "Fred":
                 print()
                 print("="*20 + "MISSION" + "="*20)
 
-                with open("/home/nsauvage/Documents/Python/Lestroisgogols/Missions.txt", "a") as fichier2:
+                with open("Missions.txt", "a") as fichier2:
                     fichier2.write(fichier)
 
                 with open(fichier, "r") as fichier:
