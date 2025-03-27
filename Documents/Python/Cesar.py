@@ -1,8 +1,8 @@
 import string
 
 caracs = string.ascii_letters
-msg = "Je suis Moi."
-cle = 15
+msg = input("Entrez message : ")
+cle = input("Entrez votre clé : ")
 msf_f = ""
 
 for x in msg:
