@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 
 typedef struct dico2
 {
@@ -17,6 +17,30 @@ typedef struct dico
 
 Principale frequences[1000];
 char texteP[1000];
+
+void afficherStructure()
+{
+    putchar('{');
+    for (int i = 0; frequences[i].lettre; ++i)
+    {
+        if (i)
+        {
+            printf("}, ");
+        }
+
+        printf("'%c' : {", frequences[i].lettre);
+
+        for (int x = 0; frequences[i].secondaire[x].lettre; ++x)
+        {
+            if (x)
+            {
+                printf(", ");
+            }
+            printf("'%c' : %d", frequences[i].secondaire[x].lettre, frequences[i].secondaire[x].nbOccurences);
+        }
+    }
+    printf("}}\n");
+}
 
 int estDansDico(char lettre, int * index)
 {
@@ -42,6 +66,23 @@ int estDansDico(char lettre, int * index)
     return 0;
 }
 
+int estDansSecondaire(Secondaire * frequences, char lettre, int * index)
+{
+    for (int i = 0; frequences[i].lettre; ++i)
+    {
+        if (lettre == frequences[i].lettre)
+        {
+            if (index != NULL)
+            {
+                (*index) = i;
+            }
+
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void construireFrequences(char * texte)
 {
     int index = 0;
@@ -49,18 +90,28 @@ void construireFrequences(char * texte)
 
     for (int i = 0; texte[i + 1]; ++i)
     {
+        /*
+         * Si la lettre courante est déjà dans la structure principale, on vérifie si la lettre suivante
+         * (celle que l'on veut écrire dans la structure secondaire de la lettre courante) existe, si oui,
+         * on l'incrémente de 1, sinon on la créé et on l'incrémente de 1. Si la lettre courante
+         * n'est pas dans la structure principale, on l'ajoute et on ajoute aussi la lettre suivante
+         * dans la structure secondaire.
+         */
         if (estDansDico(texte[i], &indexDico))
         {
-            //puts("Oui");
-            // frequences[i].secondaire[frequences[i].indexSecondaire].lettre = texte[i + 1];
-            // frequences[i].secondaire[frequences[i].indexSecondaire].nbOccurences += 1;
+            int pos = 0;
 
-            // frequences[i].indexSecondaire++;
-            frequences[indexDico].secondaire[frequences[indexDico].indexSecondaire].lettre = texte[i + 1];
-            frequences[indexDico].secondaire[frequences[indexDico].indexSecondaire].nbOccurences += 1;
+            if (estDansSecondaire(frequences[indexDico].secondaire, texte[i + 1], &pos))
+            {
+                frequences[indexDico].secondaire[pos].nbOccurences++;
+            }
+            else
+            {
+                frequences[indexDico].secondaire[frequences[indexDico].indexSecondaire].lettre = texte[i + 1];
+                frequences[indexDico].secondaire[frequences[indexDico].indexSecondaire].nbOccurences++;
 
-            frequences[indexDico].indexSecondaire++;
-            //index++;
+                frequences[indexDico].indexSecondaire++;
+            }
         }
         else
         {
@@ -68,6 +119,7 @@ void construireFrequences(char * texte)
             frequences[index].secondaire[frequences[index].indexSecondaire].lettre = texte[i + 1];
             frequences[index].secondaire[frequences[index].indexSecondaire].nbOccurences += 1;
 
+            frequences[index].indexSecondaire++;
             ++index;
         }
     }
@@ -97,7 +149,7 @@ void init(char * texte)
      */
     for (int i = 0; frequences[i].lettre; ++i)
     {
-        frequences[i].lettre = ' ';
+        frequences[i].lettre = 0;
         frequences[i].indexSecondaire = 0;
 
         /*
@@ -115,41 +167,39 @@ void init(char * texte)
      pretraiter(texte, texteP);
 }
 
-void afficherStructure()
+void recupererMots(char * texte)
 {
-    putchar('{');
-    for (int i = 0; frequences[i].lettre; ++i)
+    FILE *fp = fopen("texte2.txt", "r");
+    if (!fp) return;
+
+    int index = 0;
+    int carac;
+
+    while ((carac = fgetc(fp)) != EOF)
     {
-        if (i)
+        if (carac != '\n')
         {
-            printf("}, ");
-        }
-
-        printf("'%c' : {", frequences[i].lettre);
-
-        for (int x = 0; frequences[i].secondaire[x].lettre; ++x)
-        {
-            if (x)
-            {
-                printf(", ");
-            }
-            printf("'%c' : %d", frequences[i].secondaire[x].lettre, frequences[i].secondaire[x].nbOccurences);
+            texte[index] = carac;
+            index++;
         }
     }
-    printf("}}\n");
-    // putchar('\n');
+
+    texte[index] = '\0';
+
+    fclose(fp);
 }
 
 int main(int argc, char ** argv)
 {
-    // frequences[0].lettre = 'T';
+    char texte[1000];
+    // char texteP[1000];
 
-    if (argc > 1)
-    {
-        init(argv[1]);
-        construireFrequences(texteP);
-    }
+    recupererMots(texte);
 
+    // init(texte, texteP);
+    init(texte);
+
+    construireFrequences(texteP);
     afficherStructure();
 
     return 0;
