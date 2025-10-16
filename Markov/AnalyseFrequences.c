@@ -15,10 +15,7 @@ typedef struct dico
     Secondaire secondaire[1000];
 } Principale;
 
-Principale frequences[1000];
-char texteP[1000];
-
-void afficherStructure()
+void afficherStructure(Principale * frequences)
 {
     putchar('{');
     for (int i = 0; frequences[i].lettre; ++i)
@@ -42,7 +39,7 @@ void afficherStructure()
     printf("}}\n");
 }
 
-int estDansDico(char lettre, int * index)
+int estDansDico(char lettre, int * index, Principale * frequences)
 {
     /*
      * Sert à vérifier si une lettre donné en paramètre est déjà
@@ -83,7 +80,7 @@ int estDansSecondaire(Secondaire * frequences, char lettre, int * index)
     return 0;
 }
 
-void construireFrequences(char * texte)
+void construireFrequences(char * texte, Principale * frequences)
 {
     int index = 0;
     int indexDico = 0;
@@ -97,7 +94,7 @@ void construireFrequences(char * texte)
          * n'est pas dans la structure principale, on l'ajoute et on ajoute aussi la lettre suivante
          * dans la structure secondaire.
          */
-        if (estDansDico(texte[i], &indexDico))
+        if (estDansDico(texte[i], &indexDico, frequences))
         {
             int pos = 0;
 
@@ -141,7 +138,7 @@ void pretraiter(char * texte, char * sortie)
 	}
 }
 
-void init(char * texte)
+void init(char * texte, Principale * frequences)
 {
     /*
      * Initialisation.
@@ -164,7 +161,7 @@ void init(char * texte)
     /*
      * Prétraitement du texte
      */
-     pretraiter(texte, texteP);
+     pretraiter(texte, texte);
 }
 
 void recupererMots(char * texte)
@@ -192,15 +189,14 @@ void recupererMots(char * texte)
 int main(int argc, char ** argv)
 {
     char texte[1000];
-    // char texteP[1000];
+    Principale frequences[1000];
 
     recupererMots(texte);
 
-    // init(texte, texteP);
-    init(texte);
+    init(texte, frequences);
 
-    construireFrequences(texteP);
-    afficherStructure();
+    construireFrequences(texte, frequences);
+    afficherStructure(frequences);
 
     return 0;
 }
