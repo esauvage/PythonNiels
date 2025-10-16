@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 typedef struct dico2
 {
@@ -164,9 +166,9 @@ void init(char * texte, Principale * frequences)
      pretraiter(texte, texte);
 }
 
-void recupererMots(char * texte)
+void recupererMots(char * texte, char * nomFichier)
 {
-    FILE *fp = fopen("texte2.txt", "r");
+    FILE *fp = fopen(nomFichier, "r");
     if (!fp) return;
 
     int index = 0;
@@ -186,17 +188,43 @@ void recupererMots(char * texte)
     fclose(fp);
 }
 
+void longueurFichier(int * taille, char * nomFichier)
+{
+    FILE *fp = fopen(nomFichier, "r");
+    if (!fp) return;
+
+    int carac;
+
+    while ((carac = fgetc(fp)) != EOF)
+    {
+        (*taille)++;
+    }
+    fclose(fp);
+}
+
 int main(int argc, char ** argv)
 {
-    char texte[1000];
+    // char texte[1000];
+    char * texte;
     Principale frequences[1000];
 
-    recupererMots(texte);
+    if (argc > 1)
+    {
+        int taille;
+        longueurFichier(&taille, argv[1]);
 
-    init(texte, frequences);
+        texte = (char *)malloc(taille * sizeof(char));
+        recupererMots(texte, argv[1]);
 
-    construireFrequences(texte, frequences);
-    afficherStructure(frequences);
+        printf("%d\n", taille);
+
+        init(texte, frequences);
+
+        construireFrequences(texte, frequences);
+        afficherStructure(frequences);
+    }
+
+    free(texte);
 
     return 0;
 }
