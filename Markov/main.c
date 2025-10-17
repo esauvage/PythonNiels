@@ -31,34 +31,15 @@
 typedef struct dico {
     char cle;
     char valeur[1024];
-    // int nbOccurences;
 } Dico;
 
 Dico monDico[2048];
 
-/*void decoupeMots(char * texte, char mots[256][256]) {
-	char mot[50];
-	for (int i = 0, j = 0, k = 0; i < strlen(texte); i++)
-	{
-		if (isalpha(texte[i])) {
-			//mots[i] = texte[i];
-			mot[k] = texte[i];
-			k++;
-		}
-		else {
-			mot[k] = '\0';
-			strcpy(mots[j], mot);
-			j++;
-			//printf("%s\n", mot);
-			mot[0] = '\0';
-			k = 0;
-		}
-	}
-	//return mots;
-}*/
-
 void pretraiter(char * texte, char * sortie)
 {
+    // Transforme le texte donné en entrée en supprimant tous les caractères non-lettre
+    // et en mettant les lettres en majuscules.
+
 	int index = 0;
 	for (int i = 0; texte[i]; ++i)
 	{
@@ -71,42 +52,65 @@ void pretraiter(char * texte, char * sortie)
 }
 
 int lenFile(void) {
+    // Fonction servant à obtenir le nombre de caractère d'un fichier texte
+
     FILE *fp = fopen("texte.txt", "r");
+
     if (!fp) return -1;
+
     int c, lFile = 0;
     while ((c = getc(fp)) != EOF) lFile++;
+
     fclose(fp);
+
     return lFile;
 }
+/*
+ * Ne sert à rien (je crois).
+ * La fonction recupererMots() fonctionne mieux.
+ */
+// char *readFile(char *texte) {
+//     FILE *fp = fopen("texte.txt", "r");
 
-char *readFile(char *texte) {
-    FILE *fp = fopen("texte.txt", "r");
-    if (!fp) return NULL;
-    int c, i = 0;
-    while ((c = getc(fp)) != EOF) {
-        if (c != '\n') texte[i++] = (char)c;
-    }
-    texte[i] = '\0';
-    fclose(fp);
-    return texte;
-}
+//     if (!fp) return NULL;
+
+//     int c, i = 0;
+//     while ((c = getc(fp)) != EOF) {
+//         if (c != '\n') texte[i++] = (char)c;
+//     }
+//     texte[i] = '\0';
+//     fclose(fp);
+//     return texte;
+// }
 
 void analyser(char *texte) {
+    /*
+     * Sert à construire le tableau de structures "monDico".
+     */
+
     int index = 0;
+
+    // Jusqu'à l'avant dernier caractères
     for (int i = 0; texte[i+1]; i++) {
         char courant = texte[i];
         char suivant = texte[i+1];
         int trouve = 0;
 
+        // Pour tous les structures du tableau
         for (int x = 0; monDico[x].cle; x++) {
+            // Si notre lettre est trouvé, on rajoute celle qui vient après
             if (monDico[x].cle == courant) {
                 int len = strlen(monDico[x].valeur);
                 monDico[x].valeur[len] = suivant;
                 monDico[x].valeur[len+1] = '\0';
+
+                // On a trouvé notre lettre
                 trouve = 1;
                 break;
             }
         }
+
+        // Si on a pas trouvé notre lettre dans la boucle plus haut
         if (!trouve) {
             monDico[index].cle = courant;
             monDico[index].valeur[0] = suivant;
@@ -129,23 +133,27 @@ char * genererMot(char * mot, int longueurMot)
 	// Obtenir le nombre de clés du dico
 	for (nbKeys = 0; monDico[nbKeys].cle; ++nbKeys) {}
 
-	// prendre une première lettre au pif et la mettre en 1er position
+	// Prendre une première lettre au pif et la mettre en 1ère position
 	premiereLettre = rand() % nbKeys;
 	mot[0] = monDico[premiereLettre].cle;
 
+	// 1 parce que l'on a déjà la 1ère lettre
 	i = 1;
 	while (i < longueurMot)
 	{
 		char *tmp = monDico[premiereLettre].valeur;
-		for (nbValues = 0 ; *tmp; ++nbValues, tmp++) {}
 
-		//~ for (nbValues = 0; monDico[premiereLettre].valeur[nbValues]; ++nbValues)
-		//~ {
-		//~ }
+		// Obtenir le nombre de lettres qui suivent la dernière lettre
+		// Obsolète
+		// for (nbValues = 0; *tmp; ++nbValues, tmp++) {}
+		// peut être remplacer par
+		nbValues = strlen(tmp);
 
+		// On choisit au pif la lettre suivante parmi celles disponibles
 		suivante = rand() % nbValues;
 		mot[i] = monDico[premiereLettre].valeur[suivante];
 
+		// Trouver l'index de la lettre suivante dans les clés. (pas très clair)
 		for (indexCle = 0; monDico[indexCle].cle != monDico[premiereLettre].valeur[suivante]; ++indexCle) {}
 		suivante = indexCle;
 		premiereLettre = suivante;

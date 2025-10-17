@@ -202,9 +202,12 @@ void longueurFichier(int * taille, char * nomFichier)
     fclose(fp);
 }
 
+void genererMots(Principale frequences)
+{
+}
+
 int main(int argc, char ** argv)
 {
-    // char texte[1000];
     char * texte;
     Principale frequences[1000];
 
@@ -222,9 +225,9 @@ int main(int argc, char ** argv)
 
         construireFrequences(texte, frequences);
         afficherStructure(frequences);
-    }
 
-    free(texte);
+        free(texte);
+    }
 
     return 0;
 }
