@@ -3,9 +3,10 @@ import threading
 import sys
 import XOR
 
-IP = "localhost"
+IP = "176.187.157.48"
 PORT = 7894
-CLE = "Smurtz123"
+# CLE = "Smurtz123"
+CLE = 'vfdkhjfdhdfhhgé"kn fsbhkfsdsdl pl4445hsfdhfds54s454dsgsfdH;<djv15345djhfdsfbhsd690b:gdhbg'
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((IP, PORT))
@@ -13,36 +14,39 @@ client.connect((IP, PORT))
 pseudo = input("Pseudo : ")
 client.send(pseudo.encode("utf-8"))
 
+
 def envoyerMessage():
-	while True:
-		message = input()
-		if message.strip() == "":
-			continue
+    while True:
+        message = input()
+        if message.strip() == "":
+            continue
 
-		data = XOR.chiffrer(message, CLE).encode("utf-8")
-		client.send(data)
+        data = XOR.chiffrer(message, CLE).encode("utf-8")
+        client.send(data)
 
-		if message == "exit":
-			client.close()
-			sys.exit()
+        if message == "exit":
+            client.close()
+            sys.exit()
+
 
 def recevoirMessage():
-	while True:
-		try:
-			data = client.recv(1024)
-			if not data:
-				break
+    while True:
+        try:
+            data = client.recv(1024)
+            if not data:
+                break
 
-			message = XOR.dechiffrer(data.decode("utf-8"), CLE)
-			
-			# ~ if not f"<{pseudo}> a rejoint le chat" in message:
-				# ~ print(message)
-			
-			print(message)
+            message = XOR.dechiffrer(data.decode("utf-8"), CLE)
 
-		except:
-			print("Connexion perdue.")
-			break
+            # ~ if not f"<{pseudo}> a rejoint le chat" in message:
+            # ~ print(message)
+
+            print(message)
+
+        except:
+            print("Connexion perdue.")
+            break
+
 
 threading.Thread(target=envoyerMessage, daemon=True).start()
 # ~ threading.Thread(target=recevoirMessage, daemon=True).start()
@@ -50,6 +54,6 @@ recevoirMessage()
 
 # ~ # Pour que le programme reste vivant
 # ~ while not mort:
-	# ~ pass
-	
+# ~ pass
+
 # ~ client.close()
