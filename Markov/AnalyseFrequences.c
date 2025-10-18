@@ -22,19 +22,12 @@ void afficherStructure(Principale * frequences)
     putchar('{');
     for (int i = 0; frequences[i].lettre; ++i)
     {
-        if (i)
-        {
-            printf("}, ");
-        }
-
+        if (i) printf("}, ");
         printf("'%c' : {", frequences[i].lettre);
 
         for (int x = 0; frequences[i].secondaire[x].lettre; ++x)
         {
-            if (x)
-            {
-                printf(", ");
-            }
+            if (x) printf(", ");
             printf("'%c' : %d", frequences[i].secondaire[x].lettre, frequences[i].secondaire[x].nbOccurences);
         }
     }
@@ -138,32 +131,28 @@ void pretraiter(char * texte, char * sortie)
 			++index;
 		}
 	}
+	sortie[index] = 0;
 }
 
 void init(char * texte, Principale * frequences)
 {
     /*
-     * Initialisation.
-     * Important car sinon la fonction estDansDico() ne fonctionne pas
-     */
-    for (int i = 0; frequences[i].lettre; ++i)
+    * Initialisation.
+    * Important car sinon la fonction estDansDico() ne fonctionne pas
+    */
+    for (int i = 0; i < 1000; ++i)
     {
         frequences[i].lettre = 0;
         frequences[i].indexSecondaire = 0;
 
-        /*
-         * Initialisation des variables de secondaire
-         */
-         for (int x = 0; frequences[i].secondaire[x].nbOccurences; ++x)
-         {
-             frequences[i].secondaire[x].nbOccurences = 0;
-         }
+        for (int x = 0; x < 1000; ++x)
+        {
+            frequences[i].secondaire[x].lettre = 0;
+            frequences[i].secondaire[x].nbOccurences = 0;
+        }
     }
 
-    /*
-     * Prétraitement du texte
-     */
-     pretraiter(texte, texte);
+    pretraiter(texte, texte);
 }
 
 void recupererMots(char * texte, char * nomFichier)
@@ -188,22 +177,33 @@ void recupererMots(char * texte, char * nomFichier)
     fclose(fp);
 }
 
-void longueurFichier(int * taille, char * nomFichier)
+void longueurFichier(long int * taille, char * nomFichier)
 {
     FILE *fp = fopen(nomFichier, "r");
-    if (!fp) return;
 
-    int carac;
+    fseek(fp, 0, SEEK_END);
 
-    while ((carac = fgetc(fp)) != EOF)
-    {
-        (*taille)++;
-    }
+    (*taille) = ftell(fp);
+
     fclose(fp);
 }
 
-void genererMots(Principale frequences)
+void listerLettres(Principale * frequences, char * lettres)
 {
+    int i = 0;
+    for (int i = 0; frequences[i].lettre; ++i)
+    {
+        lettres[i] = frequences[i].lettre;
+    }
+    lettres[i] = 0;
+}
+
+void genererMots(Principale * frequences)
+{
+    char lettres[27];
+
+    listerLettres(frequences, lettres);
+    puts(lettres);
 }
 
 int main(int argc, char ** argv)
@@ -213,18 +213,20 @@ int main(int argc, char ** argv)
 
     if (argc > 1)
     {
-        int taille;
+        long int taille;
         longueurFichier(&taille, argv[1]);
 
-        texte = (char *)malloc(taille * sizeof(char));
+        texte = (char *)malloc(taille + 1 * sizeof(char));
         recupererMots(texte, argv[1]);
 
-        printf("%d\n", taille);
+        printf("%ld\n", taille);
 
         init(texte, frequences);
 
         construireFrequences(texte, frequences);
         afficherStructure(frequences);
+
+        genererMots(frequences);
 
         free(texte);
     }
