@@ -6,7 +6,7 @@ import time
 
 IP = "localhost"
 PORT = 7894
-CLE = "Smurtz123"
+CLE = 'vfdkhjfdhdfhhgé"kn fsbhkfsdsdl pl4445hsfdhfds54s454dsgsfdH;<djv15345djhfdsfbhsd690b:gdhbg'
 
 serveur = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serveur.bind((IP, PORT))
@@ -90,13 +90,22 @@ def gestionConnexion():
         message_bienvenue = XOR.chiffrer("Bienvenue sur Tchatooine !", CLE)
         client.send(message_bienvenue.encode("utf-8"))
 
-        f = open("journal.txt", "r+")
+        aModifier = False
+
+        f = open("journal.txt", "r")
         lignes = f.readlines()
 
         if len(lignes) > 30:
             lignes = [""]
+            aModifier = True
 
         f.close()
+
+        if aModifier:
+            with open("journal.txt", "w") as f:
+                f.write("")
+
+        time.sleep(0.01)
 
         for ligne in lignes:
             client.send(XOR.chiffrer(ligne.strip(), CLE).encode("utf-8"))
