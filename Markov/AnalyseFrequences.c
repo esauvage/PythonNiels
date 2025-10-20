@@ -14,6 +14,7 @@ typedef struct dico
 {
     char lettre;
     int indexSecondaire;
+    int nbOccurences;
     Secondaire secondaire[1000];
 } Principale;
 
@@ -93,6 +94,8 @@ void construireFrequences(char * texte, Principale * frequences)
         {
             int pos = 0;
 
+            frequences[index].nbOccurences++;
+
             if (estDansSecondaire(frequences[indexDico].secondaire, texte[i + 1], &pos))
             {
                 frequences[indexDico].secondaire[pos].nbOccurences++;
@@ -108,6 +111,7 @@ void construireFrequences(char * texte, Principale * frequences)
         else
         {
             frequences[index].lettre = texte[i];
+            frequences[index].nbOccurences++;
             frequences[index].secondaire[frequences[index].indexSecondaire].lettre = texte[i + 1];
             frequences[index].secondaire[frequences[index].indexSecondaire].nbOccurences += 1;
 
@@ -125,7 +129,7 @@ void pretraiter(char * texte, char * sortie)
 	int index = 0;
 	for (int i = 0; texte[i]; ++i)
 	{
-		if (isalpha(texte[i]))
+		if (isalpha(texte[i]) || texte[i] == ' ')
 		{
 			sortie[index] = toupper(texte[i]);
 			++index;
@@ -191,23 +195,80 @@ void longueurFichier(long int * taille, char * nomFichier)
 void listerLettres(Principale * frequences, char * lettres)
 {
     int i = 0;
-    for (int i = 0; frequences[i].lettre; ++i)
+    for (i = 0; frequences[i].lettre; ++i)
     {
+        // putchar(frequences[i].lettre);
         lettres[i] = frequences[i].lettre;
     }
+
+    // putchar('\n');
     lettres[i] = 0;
 }
 
-void genererMots(Principale * frequences)
+void nbLettresDansSecondaire(Secondaire * frequences, int * nbLettres)
 {
-    char lettres[27];
+    for (int i = 0; frequences[i].lettre; ++i)
+    {
+        (*nbLettres)++;
+        // printf("%d\n", (*nbLettres));
+    }
+}
 
-    listerLettres(frequences, lettres);
-    puts(lettres);
+int nbLettres(Principale *p) {
+    int ret = 0;
+
+    for (int i = 0; p[i].lettre; ++i) ret+= p[i].nbOccurences;
+
+    return ret;
+}
+
+void genererMots(Principale *p) {
+    //On va être des oufs : on va initialiser à la fois la dernière lettre possible et le nombre de lettres lu.
+    int lettreCourante = 0;
+    int taille = 0;
+
+    for (; p[lettreCourante].lettre; ++lettreCourante) taille += p[lettreCourante].nbOccurences;
+    //lettreCourante pointe maintenant sur la dernière lettre de Principale *p.
+
+    //on tire entre 0 et taille-1
+    int debut = rand() % taille;
+
+    //On soustrait à ce tirage le nombre d'occurences de chaque lettre de p, jusqu'à passer sous 0.
+    //Au pire, on s'arrête sur la dernière lettre
+    for (int i = 0; lettreCourante > i; ++i) {
+        debut -= p[i].nbOccurences;
+        lettreCourante = debut > 0 ? lettreCourante : i;
+    }
+    printf("%c", p[lettreCourante].lettre);
+
+    // for (int x = 0; x < longueur; ++x)
+    while (p[lettreCourante].lettre != ' ')
+    {
+        int nbLettresSecond = 0;
+
+        for (int i = 0; p[lettreCourante].secondaire[i].lettre; ++i) nbLettresSecond += p[lettreCourante].secondaire[i].nbOccurences;
+
+        int choix = rand() % nbLettresSecond;
+
+        int i;
+        for (i = 0; choix > 0; ++i)
+        {
+            choix -= p[lettreCourante].secondaire[i].nbOccurences;
+        }
+        printf("%c", p[lettreCourante].secondaire[i].lettre);
+
+        int indexSuiv;
+        estDansDico(p[lettreCourante].secondaire[i].lettre, &indexSuiv, p);
+
+        lettreCourante = indexSuiv;
+    }
+    putchar('\n');
 }
 
 int main(int argc, char ** argv)
 {
+    srand(time(NULL));
+
     char * texte;
     Principale frequences[1000];
 
@@ -219,14 +280,17 @@ int main(int argc, char ** argv)
         texte = (char *)malloc(taille + 1 * sizeof(char));
         recupererMots(texte, argv[1]);
 
-        printf("%ld\n", taille);
+        // printf("%ld\n", taille);
 
         init(texte, frequences);
 
         construireFrequences(texte, frequences);
-        afficherStructure(frequences);
+        // afficherStructure(frequences);
 
-        genererMots(frequences);
+        for (int i = 0; i < 100; ++i)
+        {
+            genererMots(frequences);
+        }
 
         free(texte);
     }
