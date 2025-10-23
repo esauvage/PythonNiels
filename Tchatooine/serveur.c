@@ -91,8 +91,12 @@ void deconnexionClient(int client, const char *pseudo)
         memset(pseudos[index], 0, sizeof(pseudos[index]));
 
         char msg[1024];
+        char msgChiffre[1024];
         sprintf(msg, "%s a quitté le tchat", pseudo);
-        diffuser(msg);
+
+        ChiffrerTexte(msg, msgChiffre, cle);
+
+        diffuser(msgChiffre);
     }
 }
 
@@ -172,22 +176,24 @@ void gestionConnexion(int socket_serveur, struct sockaddr_in adresse, socklen_t 
         char pseudoDechiffre[1024];
         recv(socket_client, pseudo, sizeof(pseudo), 0);
 
-        ChiffrerTexte(pseudo, pseudoDechiffre, "PèreNoël256");
+        ChiffrerTexte(pseudo, pseudoDechiffre, cle);
 
         // Enregistre le nouveau client
         clients[nbClients] = socket_client;
-        strcpy(pseudos[nbClients], pseudo);
+        strcpy(pseudos[nbClients], pseudoDechiffre);
         nbClients++;
 
-        printf("%s a rejoint le tchat\n", pseudo);
+        printf("%s a rejoint le tchat\n", pseudoDechiffre);
 
         char msg[1024];
-        sprintf(msg, "%s a rejoint le tchat", pseudo);
-        diffuser(msg);
+        char msgChiffre[1024];
+        sprintf(msg, "%s a rejoint le tchat", pseudoDechiffre);
+        ChiffrerTexte(msg, msgChiffre, cle);
+        diffuser(msgChiffre);
 
         InfoClient *infoClient = malloc(sizeof(InfoClient));
         infoClient->client = socket_client;
-        infoClient->pseudo = strdup(pseudo);
+        infoClient->pseudo = strdup(pseudoDechiffre);
 
         pthread_t t_client;
         pthread_create(&t_client, NULL, gestionClient, infoClient);

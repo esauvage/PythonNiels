@@ -4,12 +4,15 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <pthread.h>
-// #include "XOR.h"
+#include "XOR.h"
 
 #define PORT 8080
 
 int envoyer_actif = 1;
 char pseudo[1024];
+char pseudoChiffre[1024];
+
+const char * cle = "PèreNoël256";
 
 void * envoyerMessage(void * arg)
 {
@@ -19,12 +22,15 @@ void * envoyerMessage(void * arg)
     {
         char msg_f[1024];
         char msg[1024];
+        char msgChiffre[1024];
 
         fgets(msg, sizeof(msg), stdin);
         sprintf(msg_f, "%s : %s", pseudo, msg);
         msg_f[strlen(msg_f) - 1] = '\0';
 
-        send(socket_client, msg_f, sizeof(msg_f), 0);
+        ChiffrerTexte(msg_f, msgChiffre, cle);
+
+        send(socket_client, msgChiffre, sizeof(msgChiffre), 0);
 
         // Si l'utilisateur veut quitter
         char test[1024];
@@ -48,6 +54,7 @@ void recevoirMessage(int socket_client)
     while (1)
     {
         char buf[1024];
+        char msgDechiffre[1024];
         int valread;
 
         valread = recv(socket_client, buf, sizeof(buf), 0);
@@ -55,7 +62,9 @@ void recevoirMessage(int socket_client)
         if (!valread) break;
         if (!envoyer_actif) break;
 
-        puts(buf);
+        ChiffrerTexte(buf, msgDechiffre, cle);
+
+        puts(msgDechiffre);
     }
     pthread_cancel(t_send); // arrête le thread d'envoi
 }
@@ -91,9 +100,11 @@ int main(int argc, char const* argv[])
     printf("Pseudo : ");
     fgets(pseudo, sizeof(pseudo), stdin);
 
-    pseudo[strlen(pseudo) - 1] = '\0';
+    pseudo[strlen(pseudo) - 1] = '\0'; // Supprimer le '\n' à la fin du message
 
-    send(client_fd, pseudo, sizeof(pseudo), 0);
+    ChiffrerTexte(pseudo, pseudoChiffre, cle);
+
+    send(client_fd, pseudoChiffre, sizeof(pseudoChiffre), 0);
 
     recevoirMessage(client_fd);
 
