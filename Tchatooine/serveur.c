@@ -3,7 +3,7 @@
  * @brief Serveur de tchat multi-clients utilisant les threads POSIX.
  * @version 1.1
  * @date 2025-10-22
- * @author Luke
+ * @author Luke Skycodeur
  *
  * Ce programme met en place un serveur TCP simple capable de gérer plusieurs
  * clients simultanément grâce aux threads. Chaque client reçoit les messages
@@ -65,6 +65,97 @@ void diffuser(const char *message)
 }
 
 /**
+ * @brief Cette fonction prend en entrée un tableau de chaine de caractère et mets chaque lign du fichier journal dedans.
+ * @note Utilisée dans transmettreJournal()
+ *
+ * @param file Le fichier à traiter
+ * @param lines Le tableau où mettre les lignes récupérées
+ * @param nbLignes Argument optionnel servant à obtenir le nombre de lignes du fichier
+ */
+void freadlines(FILE *file, char lines[1024][1024], int * nbLignes)
+{
+    int index = 0;
+
+    while (index < 1024 && !feof(file))
+    {
+        if (fgets(lines[index], 1024, file) != NULL) {
+            // fgets garde le '\n' si présent
+            index++;
+        }
+    }
+    if (nbLignes != NULL)
+    {
+        *nbLignes = index;
+    }
+}
+
+/**
+ * @brief Cette fonction s'occupe de transmettre le fichier journal où sont enregistrées les communications au client venant de se connecter
+ */
+void transmettreJournal(int socketClient, char * pseudo)
+{
+    FILE * file = fopen("journal.txt", "r");
+    if (!file)
+    {
+        perror("Impossible d'ouvrir journal.txt en lecture");
+        return;
+    }
+
+    char lignes[1024][1024];
+    int nbLignes;
+    int LignesOuPas = 1;
+
+    freadlines(file, lignes, &nbLignes);
+
+    if (nbLignes > 30 || nbLignes <= 0)
+    {
+        LignesOuPas = 0;
+    }
+
+    fclose(file);
+
+    if (!LignesOuPas)
+    {
+        // Vider le fichier
+        file = fopen("journal.txt", "w");
+        if (!file)
+        {
+            perror("Impossible d'ouvrir journal.txt en écriture");
+            return;
+        }
+        fclose(file);
+
+        usleep(10000); // 0.01 s
+    }
+
+    for (int i = 0; i < nbLignes; ++i)
+    {
+        // Supprimer le saut de ligne à la fin (pour le rendu du client)
+        lignes[i][strlen(lignes[i]) - 1] = '\0';
+        char ligneChiffre[1024];
+
+        ChiffrerTexte(lignes[i], ligneChiffre, cle);
+        send(socketClient, ligneChiffre, strlen(ligneChiffre) + 1, 0);
+
+        usleep(10000); // 0.01 s
+    }
+
+    file = fopen("journal.txt", "a");
+    if (!file)
+    {
+        perror("Impossible d'ouvrir journal.txt en ajout");
+        return;
+    }
+
+    char msg[1024];
+
+    sprintf(msg, "%s a rejoint le tchat\n", pseudo);
+    fputs(msg, file);
+
+    fclose(file);
+}
+
+/**
  * @brief Déconnecte proprement un client et informe les autres.
  *
  * @param client Le socket du client à fermer
@@ -97,6 +188,18 @@ void deconnexionClient(int client, const char *pseudo)
         ChiffrerTexte(msg, msgChiffre, cle);
 
         diffuser(msgChiffre);
+
+        FILE * file = fopen("journal.txt", "a");
+        if (!file)
+        {
+            perror("Impossible d'ouvrir journal.txt en ajout");
+            return;
+        }
+        msg[strlen(msg)] = '\n';
+
+        fputs(msg, file);
+
+        fclose(file);
     }
 }
 
@@ -134,19 +237,41 @@ void * gestionClient(void *arg)
 
         ChiffrerTexte(msg, msgDechiffre, cle);
 
+        // Pour fabriquer l'historique des conversations
+        FILE * file = fopen("journal.txt", "a");
+        if (!file)
+        {
+            perror("Impossible d'ouvrir journal.txt en ajout");
+            return NULL;
+        }
+
         // msgDechiffre[valread] = '\0'; // Sécurise la fin de chaîne
 
+        // Si le message c'est exit
         char test[1024];
         sprintf(test, "%s : exit", pseudo);
         if (!strcmp(msgDechiffre, test))
         {
+            // Réinitialiser test pour le réutiliser
+            memset(test, 0, sizeof(test));
+            sprintf(test, "%s a quitté le tchat", pseudo);
+
+            fputs(test, file);
+
             deconnexionClient(client, pseudo);
             return NULL;
         }
 
         // Rediffuse à tous les autres
-        printf("[%s] %s\n", pseudo, msgDechiffre);
+        printf("%s\n", msgDechiffre);
+
+        /// Rajouter un saut de ligne pour ne pas avoir toutes les lignes sur la même ligne
+        msgDechiffre[strlen(msgDechiffre)] = '\n';
+        fputs(msgDechiffre, file);
+
         diffuser(msg);
+
+        fclose(file);
     }
 
     return NULL;
@@ -170,10 +295,11 @@ void gestionConnexion(int socket_serveur, struct sockaddr_in adresse, socklen_t 
             continue;
         }
 
-        puts("Un client s'est connecté !");
+        // puts("Un client s'est connecté !");
 
         char pseudo[1024];
         char pseudoDechiffre[1024];
+
         recv(socket_client, pseudo, sizeof(pseudo), 0);
 
         ChiffrerTexte(pseudo, pseudoDechiffre, cle);
@@ -182,6 +308,8 @@ void gestionConnexion(int socket_serveur, struct sockaddr_in adresse, socklen_t 
         clients[nbClients] = socket_client;
         strcpy(pseudos[nbClients], pseudoDechiffre);
         nbClients++;
+
+        transmettreJournal(socket_client, pseudoDechiffre);
 
         printf("%s a rejoint le tchat\n", pseudoDechiffre);
 

@@ -30,7 +30,7 @@ void * envoyerMessage(void * arg)
 
         ChiffrerTexte(msg_f, msgChiffre, cle);
 
-        send(socket_client, msgChiffre, sizeof(msgChiffre), 0);
+        send(socket_client, msgChiffre, strlen(msgChiffre) + 1, 0);
 
         // Si l'utilisateur veut quitter
         char test[1024];
