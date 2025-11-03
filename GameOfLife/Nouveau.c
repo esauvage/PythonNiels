@@ -11,7 +11,8 @@ typedef struct
 } Point;
 
 int lancerThread = 1;
-int delai = 500;
+int delai = 100;
+int generation = 0;
 
 int lireConfig(Point ** points)
 {
@@ -112,6 +113,11 @@ void * jouerTour(void * arg)
         if (!pointsTemp) puts("Erreur malloc()");
     }
 
+    if (generation == 0)
+    {
+        usleep(delai * 1000);
+    }
+
     copier(points, pointsTemp);
 
     for (int y = 0; y < 72; y++)
@@ -154,6 +160,7 @@ void * jouerTour(void * arg)
     usleep(delai * 1000);
 
     lancerThread = 1;
+    generation++;
 
     return NULL;
 }
@@ -205,6 +212,8 @@ int main()
 
         dessinerGrille();
         dessinerPointsNoirs(points);
+
+        DrawText(TextFormat("Génération : %d", generation), 10, 700, 20, BLACK);
 
         EndDrawing();
     }
